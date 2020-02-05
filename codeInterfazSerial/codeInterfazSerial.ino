@@ -3,7 +3,7 @@
 #define MAX_LCD_LENGTH  15
 #define MINIMO(A,B) ( A < B ) ? A : B
 #define BUTTON_PIN 13
-//#define MAX_STR_RCV_LENGTH  30
+
 LiquidCrystal lcd(7, 8, 9, 10, 11, 12); //    ( RS, EN, d4, d5, d6, d7)
 
 void setup()
@@ -36,35 +36,29 @@ void loop()
     timeOutShiftLcd = true;
     t_initShiftLcd = millis();
   }
-  if((millis()-t_initAntiRebote)>500){
+  if((millis()-t_initAntiRebote)>100){
     timeOutAntiRebote = true;
     t_initAntiRebote = millis();
   }
-  if ((digitalRead(BUTTON_PIN) == HIGH) && (!buttonPressed)){
+  if ((digitalRead(BUTTON_PIN) == HIGH) && (!buttonPressed) && timeOutAntiRebote){
     buttonPressed = true;
+    timeOutAntiRebote = false;
     i_btnPrss++;
     DBG("i btn prss");
     DBG(i_btnPrss);
   }
 
-  
-  
   if (Serial.available()) {
     dataRcv = "";//Se vacían los datos recibidos
     cursorVirtual = 0;
     dataRcv = Serial.readStringUntil('\n');
     delay(5);
-    //DBG("El string recibido:");
-    //DBG(dataRcv);
-    //DBG(dataRcv.charAt(0));
     if (dataRcv.charAt(0) == '#'){
       data2Send = dataRcv.substring(1);
       softClear(1);
       lcd.print(data2Send);
     }
-    //delay(100);
     dataRcvLength = dataRcv.length();
-    //msgLongRcv = (dataRcvLength > MAX_LCD_LENGTH)? true : false;
     if (dataRcvLength > MAX_LCD_LENGTH) {
       msgLongRcv = true;
     }
@@ -74,20 +68,6 @@ void loop()
       lcd.print(dataRcv);
     }
   }
-  //corriendo el texto con ayuda del cursor
-  //--------------------------------------b
-  /*if (msgLongRcv) {
-    lcd.clear();
-    lcd.setCursor(cursorUp, 0);
-    lcd.print(dataRcv);
-    //cursorUp = (cursorUp++) % 15;//para q la palabra avance a la derecha
-    
-    //para que el contador vaya de 15 a 0--a
-    cursorUp--;
-    cursorUp = (cursorUp < 0)? 15 : cursorUp;
-    //-------------------------------------a
-    DBG(cursorUp);
-  }*/ //--------------------------------------b
   if (msgLongRcv && timeOutShiftLcd){
     timeOutShiftLcd = false;
     softClear(0);
@@ -95,13 +75,7 @@ void loop()
     cursorVirtual = (++cursorVirtual) % dataRcvLength;
     //DBG(cursorVirtual);
   }
-//  else {
-//    lcd.clear();
-//    lcd.print(dataRcv);
-//    //dataRcv = "";
-//  }
-  //delay(500);//
-  if (buttonPressed && timeOutAntiRebote){
+  if (buttonPressed && timeOutAntiRebote){ 
     DBG("ok   send");
     buttonPressed = false;
     timeOutAntiRebote = false;
@@ -115,10 +89,3 @@ void softClear(int fila){
   lcd.print("                ");
   lcd.setCursor(0, fila);
 }
-//void mostrarStringLargo(String &mensaje) {
-//  for (int i = 15; i >= 0; i--) {
-//    lcd.setCursor(i, 0);
-//    lcd.print(mensaje);
-//    delay(500);
-//  }
-//}
