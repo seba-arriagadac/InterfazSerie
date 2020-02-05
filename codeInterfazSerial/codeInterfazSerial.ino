@@ -42,7 +42,7 @@ void loop()
   }
   if ((digitalRead(BUTTON_PIN) == HIGH) && (!buttonPressed)){
     buttonPressed = true;
-    i_btnPrss++;
+    i_btnPrss++;//esto muestra el rebote
     DBG("i btn prss");
     DBG(i_btnPrss);
   }
