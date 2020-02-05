@@ -4,49 +4,53 @@
 #define MINIMO(A,B) ( A < B ) ? A : B
 #define BUTTON_PIN 13
 //#define MAX_STR_RCV_LENGTH  30
-int pushButtom = 13;
 LiquidCrystal lcd(7, 8, 9, 10, 11, 12); //    ( RS, EN, d4, d5, d6, d7)
 
 void setup()
 {
-  lcd.begin(16, 2); // Fijar el numero de caracteres y de filas
+  lcd.begin(16, 2); //Inicializa la pantalla con el numero de caracteres y de filas
   Serial.begin(9600);
   pinMode(BUTTON_PIN, INPUT);
-  lcd.print(" Interfaz serie"); // Enviar el mensaje
-  softClear(1);
+  lcd.print(" Interfaz serie"); //Pantalla de inicio
+  lcd.setCursor(0,1);
   lcd.print("    Iniciada");
 }
 
 void loop()
 {
   static bool msgLongRcv = false;
-  static int cursorUp = 15;
-  static int cursorVirtual = 0;
-  static int dataRcvLength;
-  static String dataRcv = "mensaje inicial";
-  static String data2Send = "02t010020030040050060070080090100";
-  static unsigned long t_initShiftLcd = millis();
-  static unsigned long t_initAntiRebote = millis();
   static bool timeOutShiftLcd = false;
   static bool timeOutAntiRebote = false;
   static bool buttonPressed = false;
+  static int cursorUp = 15;
+  static int cursorVirtual = 0;
+  static int dataRcvLength;
+  static unsigned long t_initShiftLcd = millis();
+  static unsigned long t_initAntiRebote = millis();
+  static String dataRcv;
+  static String data2Send = "02t010020030040050060070080090100";
+
+  static int i_btnPrss = 0;
 
   if((millis()-t_initShiftLcd)>750){
     timeOutShiftLcd = true;
     t_initShiftLcd = millis();
   }
-  if((millis()-t_initAntiRebote)>1000){
+  if((millis()-t_initAntiRebote)>500){
     timeOutAntiRebote = true;
     t_initAntiRebote = millis();
   }
-  if ((digitalRead(BUTTON_PIN) == HIGH) && !buttonPressed){
+  if ((digitalRead(BUTTON_PIN) == HIGH) && (!buttonPressed)){
     buttonPressed = true;
+    i_btnPrss++;
+    DBG("i btn prss");
+    DBG(i_btnPrss);
   }
 
   
   
   if (Serial.available()) {
-    dataRcv = "";
+    dataRcv = "";//Se vacían los datos recibidos
     cursorVirtual = 0;
     dataRcv = Serial.readStringUntil('\n');
     delay(5);
@@ -61,12 +65,12 @@ void loop()
     //delay(100);
     dataRcvLength = dataRcv.length();
     //msgLongRcv = (dataRcvLength > MAX_LCD_LENGTH)? true : false;
-    if (dataRcv.length() > MAX_LCD_LENGTH) {
+    if (dataRcvLength > MAX_LCD_LENGTH) {
       msgLongRcv = true;
     }
     else {
       msgLongRcv = false;
-      lcd.clear();
+      softClear(0);
       lcd.print(dataRcv);
     }
   }
@@ -98,7 +102,7 @@ void loop()
 //  }
   //delay(500);//
   if (buttonPressed && timeOutAntiRebote){
-    //DBG("ok   send");
+    DBG("ok   send");
     buttonPressed = false;
     timeOutAntiRebote = false;
     Serial.println(data2Send);
